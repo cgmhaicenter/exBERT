@@ -43,12 +43,6 @@ args = vars(ap.parse_args())
 for ii, item in enumerate(args):
     print(item+': '+str(args[item]))
 
-# %% args = {
-#     'epochs':3, 'batchsize':10, 'save_path':'./test/', 'device':[0,1], 'learning_rate':1e-04, 'strategy':'exBERT',
-#     'config':['/sdc/NLP/BERT_pre_train_weight/bert_config_5.json','/sdc/NLP/BERT_pre_train_weight/bert_config_3.json'],
-#     'vocab':'/sdc/NLP/highway_BERT/comb_vocab.txt', 'pretrained_model_path':'/sdc/NLP/BERT_pre_train_weight/BERT_english/torch_state_dict',
-#     'datat_path':'/sdc/NLP/data/book/seg_128_NSP_p5/clean/*', 'longest_sentence':128, 'percentage':1, 'sep':1
-# }
 
 
 

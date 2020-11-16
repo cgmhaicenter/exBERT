@@ -40,21 +40,6 @@ args = vars(ap.parse_args())
 print(args)
 
 
-
-# args = {
-#     'epochs':1,
-#     'batchsize':20,
-#     'save_path':'./test/NER',
-#     'device': [0],
-#     'learning_rate':1e-05,
-#     'strategy': 'exBERT',
-#     'config':['/sdc/NLP/BERT_pre_train_weight/bert_config_5.json','/sdc/NLP/BERT_pre_train_weight/bert_config_3.json'],
-#     'vocab':'/sdc/NLP/highway_BERT/comb_vocab.txt',
-#     'pretrained_model_path':'./test/Best_state_dict',
-#     'data_path':'/sdc/NLP/data/NER/data/BC5CDR-IOB/',
-#     'train_layer_number': ['9','10','11'],
-# }
-
 if args['device'] == -1:
     device = 'cpu'
     device_ids = 'cpu'
