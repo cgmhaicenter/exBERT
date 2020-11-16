@@ -1,4 +1,6 @@
 # exBERT
+The details of the model is in [paper](https://www.aclweb.org/anthology/2020.findings-emnlp.129/).
+
 
 ## Pre-train an exBERT model (only the extension part)
 
