@@ -158,7 +158,7 @@ optimizer_grouped_parameters = [
 
 # %%
 
-def load_data(data_path,tar_id, sep_range, percentage, random_seed,load_all = False):
+def load_data(data_path,tar_id, sep_range, percentage, random_seed, val_p = 1000, load_all = False):
     Train_Data = []
     Val_Data = []
     Train_Label = np.array([])
@@ -168,12 +168,14 @@ def load_data(data_path,tar_id, sep_range, percentage, random_seed,load_all = Fa
         print('loading data: '+fns[ii])
         with open(fns[ii],'rb') as f:
             temp = pickle.load(f)
-            temp_tl = np.zeros(len(temp[0]))
-            temp_tl[int(len(temp[0])/2):] = 1
-            temp_vl = np.zeros(len(temp[1]))
-            temp_vl[int(len(temp[1])/2):] = 1
-        Train_Data += temp[0]
-        Val_Data += temp[1]
+            temp_tl = np.zeros(len(temp[0])*2-val_p*2)
+            temp_tl[int(len(temp_tl)/2):] = 1
+            temp_vl = np.zeros(val_p*2)
+            temp_vl[int(len(temp_vl)/2):] = 1
+        Train_Data += temp[0][:-val_p]
+        Train_Data += temp[1][:-val_p]
+        Val_Data += temp[0][-val_p:]
+        Val_Data += temp[1][-val_p:]
         Train_Label = np.concatenate([Train_Label,temp_tl])
         Val_Label = np.concatenate([Val_Label,temp_vl])
 
