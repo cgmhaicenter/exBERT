@@ -51,3 +51,15 @@ You can replace the `path_to_config_file_of_the_OFF_THE_SHELF_MODEL` and `path_t
       -ls 128 
       -p 1
       -t_ex_only ""
+
+
+## Data preparation
+Input data for pre-training script should be a .pkl file which contains two a list with two elements, e.g. \[list1, list2\].
+list1 and list2 should contains the sentences like `[CLS] sentence A [SEP] sentence B [SEP]`. The only differnece between list1 and list2 is the relationship between `sentence A` and `sentence B` is IsNext or NotNext.  Please check `example_data.pkl`
+
+We also provide a simple script to generate the data from raw text file. 
+`python data_preprocess.py -voc path_to_vocab_file -ls 128 -dp path_to_txt_file -n_c 5 -rd 1 -sp ./your_data.pkl`
+replace `128` to the max length limit you want
+try `python data_preprocess.py -voc ./exBERT_vocab.txt -ls 128 -dp ./example_raw_text.txt -n_c 5 -rd 1 -sp ./example_data.pkl`
+
+Or you can do your own data preparation and organize the data with the format metioned above.
