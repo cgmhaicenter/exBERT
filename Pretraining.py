@@ -18,7 +18,7 @@ import torch.nn as nn
 import os
 import random
 from exBERT import BertTokenizer, BertAdam
-
+import tensorflow as tf
 # %%
 
 
@@ -32,7 +32,8 @@ ap.add_argument('-lr','--learning_rate',required = True, type = float, help='lea
 ap.add_argument('-str','--strategy',required = True, type = str, help='choose a strategy from [exBERT], [sciBERT], [bioBERT]')
 ap.add_argument('-config','--config',required = True, type = str, nargs = '+', help='dir to the config file')
 ap.add_argument('-vocab','--vocab',required = True, type = str, help='path to the vocab file for tokenization')
-ap.add_argument('-pm_p','--pretrained_model_path',default = None, type = str, help='path to the pretrained_model stat_dict')
+ap.add_argument('-pm_p','--pretrained_model_path',default = None, type = str, help='path to the pretrained_model stat_dict (torch state_dict)')
+ap.add_argument('-pm_p_tf','--pretrained_model_path_tf',default = None, type = str, help='path to the pretrained_model (tensorflow .ckpt)')
 ap.add_argument('-dp','--datat_path',required = True, type = str, help='path to data ')
 ap.add_argument('-ls','--longest_sentence', required = True, type = int, help='set the limit of the sentence lenght, recommand the same to the -dt')
 ap.add_argument('-p','--percentage', required = True, type = float, help='the percentage used for pretraining')
@@ -116,9 +117,65 @@ else:
     print("Building PyTorch model from configuration: {}".format(str(bert_config_1)))
     model = BertForPreTraining(bert_config_1)
 
+## load pre-trained model
 if args['pretrained_model_path'] is not None:
     stat_dict = t.load(args['pretrained_model_path'], map_location='cpu')
     model.load_state_dict(stat_dict, strict=False)
+    
+if args['pretrained_model_path_tf'] is not None:
+    tf_path = os.path.abspath(args['pretrained_model_path_tf'])
+    # Load weights from TF model
+    init_vars = tf.train.list_variables(tf_path)
+    names = []
+    arrays = []
+    for name, shape in init_vars:
+        print("Loading TF weight {} with shape {}".format(name, shape))
+        array = tf.train.load_variable(tf_path, name)
+        names.append(name)
+        arrays.append(array)
+
+    for name, array in zip(names, arrays):
+        name = name.split("/")
+        pointer = model
+        for m_name in name:
+            if re.fullmatch(r"[A-Za-z]+_\d+", m_name):
+                scope_names = re.split(r"_(\d+)", m_name)
+            else:
+                scope_names = [m_name]
+            if scope_names[0] == "kernel" or scope_names[0] == "gamma":
+                pointer = getattr(pointer, "weight")
+            elif scope_names[0] == "output_bias" or scope_names[0] == "beta":
+                pointer = getattr(pointer, "bias")
+            elif scope_names[0] == "output_weights":
+                pointer = getattr(pointer, "weight")
+            elif scope_names[0] == "squad":
+                pointer = getattr(pointer, "classifier")
+            else:
+                try:
+                    pointer = getattr(pointer, scope_names[0])
+                except AttributeError:
+                    print("Skipping {}".format("/".join(name)))
+                    continue
+            if len(scope_names) >= 2:
+                num = int(scope_names[1])
+                pointer = pointer[num]
+        if m_name[-11:] == "_embeddings":
+            pointer = getattr(pointer, "weight")
+        elif m_name == "kernel":
+            array = np.transpose(array)
+        try:
+            assert (
+                pointer.shape == array.shape
+            ), f"Pointer shape {pointer.shape} and array shape {array.shape} mismatched"
+        except AssertionError as e:
+            e.args += (pointer.shape, array.shape)
+            raise
+        print("Initialize PyTorch weight {}".format(name))
+        pointer.data = torch.from_numpy(array)
+    for name, shape in init_vars:
+        array = tf.train.load_variable(tf_path, name)
+        names.append(name)
+        arrays.append(array)
 
 sta_name_pos = 0
 if device is not 'cpu':
